@@ -1,0 +1,95 @@
+- name: download the latest Machine Agent RPM to /tmp 
+  shell: |
+    cd /tmp
+    ~/appd-downloader -automate -ma
+
+- name: install Machine Agent RPM
+  yum:
+    name: "{{ query('fileglob', '/tmp/appdynamics-machine-agent-*.x86_64.rpm') }}"
+    state: present
+
+- name: installed RPM
+  yum: 
+    list: appdynamics-machine-agent
+  register: installed_ma_rpm
+
+- name: debug installed RPM
+  ansible.builtin.debug:
+    msg: "Installed Machine Agent RPM {{ installed_ma_rpm.results[0].envra }}"
+
+- name: copy controller-info.xml
+  copy: 
+    src:  controller-info.xml
+    dest: "{{ machine_agent_home }}/conf/controller-info.xml"
+
+# replace variables in "{{ machine_agent_home }}/conf/controller-info.xml"
+- name: replace CONTROLLER in "{{ machine_agent_home }}/conf/controller-info.xml"
+  replace:
+    path:    "{{ machine_agent_home }}/conf/controller-info.xml"
+    regexp:  'CONTROLLER'
+    replace: "{{ controller }}"
+
+- name: replace ACCOUNT in "{{ machine_agent_home }}/conf/controller-info.xml"
+  replace:
+    path:    "{{ machine_agent_home }}/conf/controller-info.xml"
+    regexp:  'ACCOUNT'
+    replace: "{{ account }}"
+
+- name: replace ACCESS_KEY in "{{ machine_agent_home }}/conf/controller-info.xml"
+  replace:
+    path:    "{{ machine_agent_home }}/conf/controller-info.xml"
+    regexp:  'ACCESS_KEY'
+    replace: "{{ access_key }}"
+
+# - name: replace APPLICATION_NAME in "{{ machine_agent_home }}/conf/controller-info.xml"
+#   replace:
+#     path:    "{{ machine_agent_home }}/conf/controller-info.xml"
+#     regexp:  'APPLICATION_NAME'
+#     replace: "{{ application_name }}"
+
+# - name: replace TIER_NAME in "{{ machine_agent_home }}/conf/controller-info.xml"
+#   replace:
+#     path:    "{{ machine_agent_home }}/conf/controller-info.xml"
+#     regexp:  'TIER_NAME'
+#     replace: "{{ tier_name }}"
+
+# - name: replace NODE_NAME in "{{ machine_agent_home }}/conf/controller-info.xml"
+#   replace:
+#     path:    "{{ machine_agent_home }}/conf/controller-info.xml"
+#     regexp:  'NODE_NAME'
+#     replace: "{{ hostname }}"
+#------------------------------------------------
+
+- name: add Machine Agent group
+  ansible.builtin.group:
+    name: "{{ ma_user }}"
+    state: present
+
+- name: add Machine Agent user
+  ansible.builtin.user:
+    name: "{{ ma_user }}"
+    shell: /bin/bash
+    home:  /opt/appdynamics/machine-agent/
+    group: "{{ ma_user }}"
+
+- name: replace appdynamics-machine-agent with app-ma in startup script
+  replace:
+    path:    /etc/systemd/system/appdynamics-machine-agent.service
+    regexp:  'appdynamics-machine-agent'
+    replace: "{{ ma_user }}"
+
+
+- name: change owner of directory
+  ansible.builtin.file:
+    path:  /opt/appdynamics/machine-agent
+    state: directory
+    recurse: yes
+    owner: "{{ ma_user }}"
+    group: "{{ ma_user }}"
+
+- name: restart Machine Agent
+  systemd: 
+    name: appdynamics-machine-agent
+    state: restarted
+    enabled: true
+    daemon_reload: yes

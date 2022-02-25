@@ -1,0 +1,10 @@
+.vagrant
+*.tar
+*.tar.gz
+*.zip
+*~
+*.rpm
+*.tgz
+*.gz
+
+playbook.yml

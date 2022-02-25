@@ -1,0 +1,8 @@
+- name: installed RPM
+  yum: 
+    list: appdynamics-machine-agent
+  register: installed_ma_rpm
+
+- name: debug installed RPM
+  ansible.builtin.debug:
+    msg: "Installed Machine Agent RPM {{ installed_ma_rpm.envra }}"

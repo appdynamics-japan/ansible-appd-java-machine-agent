@@ -1,0 +1,79 @@
+- name: download the latest Java Agent zip to /tmp 
+  shell: |
+    cd /tmp
+    ~/appd-downloader -automate -java
+
+- name: create /opt/appdynamics/java-agent
+  ansible.builtin.file:
+    path: "{{ java_agent_home }}"
+    state: directory
+    mode: '0755'
+
+- name: unzip Java Agnt zip to /opt/appdynamics/java-agent
+  ansible.builtin.unarchive:
+    src: "{{ item }}"
+    dest: /opt/appdynamics/java-agent
+    remote_src: yes
+  with_fileglob: "/tmp/AppServerAgent-1.8-*.zip"
+
+- name: copy controller-info.xml
+  copy: 
+    src:  controller-info.xml
+    dest: "{{ java_agent_home }}/conf/controller-info.xml"
+
+# replace variables in controller-info.xml --------------------------
+- name: replace CONTROLLER in controller-info.xml
+  replace:
+    path:    "{{ java_agent_home }}/conf/controller-info.xml"
+    regexp:  'CONTROLLER'
+    replace: "{{ controller }}"
+
+- name: replace ACCOUNT in controller-info.xml
+  replace:
+    path:    "{{ java_agent_home }}/conf/controller-info.xml"
+    regexp:  'ACCOUNT'
+    replace: "{{ account }}"
+
+- name: replace ACCESS_KEY in controller-info.xml
+  replace:
+    path:    "{{ java_agent_home }}/conf/controller-info.xml"
+    regexp:  'ACCESS_KEY'
+    replace: "{{ access_key }}"
+
+- name: replace APPLICATION_NAME in controller-info.xml
+  replace:
+    path:    "{{ java_agent_home }}/conf/controller-info.xml"
+    regexp:  'APPLICATION_NAME'
+    replace: "{{ application_name }}"
+
+- name: replace TIER_NAME in controller-info.xml
+  replace:
+    path:    "{{ java_agent_home }}/conf/controller-info.xml"
+    regexp:  'TIER_NAME'
+    replace: "{{ tier_name }}"
+
+- name: replace NODE_NAME in controller-info.xml
+  replace:
+    path:    "{{ java_agent_home }}/conf/controller-info.xml"
+    regexp:  'NODE_NAME'
+    replace: "{{ node_name }}"
+#----------------------------------------------------------  
+
+- name: append CATALINA_OPTS setting to /etc/tomcat/tomcat.conf
+  ansible.builtin.lineinfile:
+    path: /etc/tomcat/tomcat.conf
+    line: "CATALINA_OPTS='-javaagent:{{ java_agent_home }}/javaagent.jar'"
+
+- name: change owner of "{{ java_agent_home }}" to tomcat
+  ansible.builtin.file:
+    path:  "{{ java_agent_home }}"
+    state: directory
+    recurse: yes
+    owner: tomcat
+    group: tomcat
+
+- name: restart Tomcat 7.0
+  systemd: 
+    name:  tomcat
+    state: restarted
+    enabled: true

@@ -1,0 +1,55 @@
+- name: set timezone {{ zone }}
+  shell: timedatectl set-timezone {{ zone }}
+  register: set_timezone
+  changed_when: false
+
+- name: set locale {{ keymap }}
+  shell: localectl set-keymap {{ keymap }}
+  register: set_locale
+  changed_when: false
+
+- name: install unzip/wget/curl/libselinux-python
+  yum:
+    name:
+      - unzip
+      - curl
+      - wget
+      - libselinux-python
+      - epel-release
+    state: present
+
+- name: SELinux permissive
+  selinux: 
+    policy: targeted
+    state: permissive
+
+- name: remove firewalld
+  yum: name=firewalld state=absent
+
+- name: sshd_config PasswordAuthentication yes
+  lineinfile:
+    dest:     /etc/ssh/sshd_config
+    state:    present
+    backrefs: yes
+    regexp:   '^#PasswordAuthentication yes'
+    line:     'PasswordAuthentication yes'
+
+- name: sshd_config delete PasswordAuthentication no
+  lineinfile:
+    dest:     /etc/ssh/sshd_config
+    state:    present
+    backrefs: yes
+    regexp:   '^PasswordAuthentication no'
+    line:     ''
+
+- name: restart sshd
+  systemd: name=sshd state=restarted
+
+- name: copy /etc/hosts
+  copy: src=hosts dest=/etc/hosts
+
+- name: copy appd-downloader
+  shell: |
+    cd ~
+    curl -Lk https://github.com/csek06/appd-binary-downloader/raw/master/cmd/appd-downloader/appd-downloader_linux -o appd-downloader
+    chmod +x appd-downloader

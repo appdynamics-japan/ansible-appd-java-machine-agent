@@ -1,0 +1,17 @@
+- name: install Tomcat 7.0
+  yum: 
+    name:  tomcat
+    state: latest
+    update_cache: yes
+
+- name: copy sample.war
+  copy: 
+    src:  sample.war
+    dest: /usr/share/tomcat/webapps/sample.war
+
+- name: restart Tomcat 7.0
+  systemd: 
+    name:  tomcat
+    state: restarted
+    enabled: true
+    daemon_reload: yes

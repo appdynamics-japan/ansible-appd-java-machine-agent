@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<controller-info>
+    <account-name>ACCOUNT</account-name>
+    <account-access-key>ACCESS_KEY</account-access-key>
+    
+    <controller-host>CONTROLLER</controller-host>
+    <controller-port>443</controller-port>
+    <controller-ssl-enabled>true</controller-ssl-enabled>
+
+    <application-name>APPLICATION_NAME</application-name>
+    <tier-name>TIER_NAME</tier-name>
+    <node-name>NODE_NAME</node-name>
+</controller-info>

@@ -1,0 +1,28 @@
+- hosts: all
+  vars:
+    locale: en_US.UTF-8
+    keymap: us
+    zone: Asia/Tokyo
+  become: yes
+  user: vagrant
+  roles:
+    - 00-common
+
+- hosts: tomcat
+  user: vagrant
+  become: yes
+  roles:
+    - 01-tomcat
+    - 10-java-agent
+    - 11-machine-agent
+  vars:
+    java_agent_home: /opt/appdynamics/java-agent
+    machine_agent_home: /opt/appdynamics/machine-agent
+    ma_user: appd-ma
+    controller: your-account.saas.appdynamics.com
+    account: your-account
+    global_account_name: your-account_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    access_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    application_name: tomcat7
+    tier_name: tomcat
+    node_name: node01
